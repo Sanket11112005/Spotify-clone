@@ -55,7 +55,7 @@ async function getSongs(folder) {
 
 const playMusic = (track, pause = false) => {
     // let audio = new Audio("/songs/" + track);
-    currentSong.src = `/${currFolder}/` + track;
+    currentSong.src = `${currFolder}/` + track;
     if (!pause) {
         currentSong.play();
         play.src = "images/pause.svg"
@@ -86,7 +86,7 @@ async function displayAlbums() {
                         <path d="M5 20V4L19 12L5 20Z" stroke="#141B34" fill="#000" stroke-width="1.5" stroke-linejoin="round" />
                     </svg>
                 </div>
-                <img src="/Songs/${folder}/cover.jpg" alt="">
+                <img src="Songs/${folder}/cover.jpg" alt="">
                 <h2>${info.title}</h2>
                 <p>${info.description}</p>
             </div>
