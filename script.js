@@ -72,7 +72,7 @@ async function displayAlbums() {
     console.log("displaying albums");
 
     // Step 1: Get the HTML of the songs folder page
-    let a = await fetch(`/Songs/`);
+    let a = await fetch(`/songs/`);
     let response = await a.text();
 
     // Step 2: Put that HTML into a hidden div so we can read its links
@@ -87,12 +87,12 @@ async function displayAlbums() {
 
         // We only care about links that look like: http://127.0.0.1:5500/songs/ncs/
         // So the href must start with our songs folder URL
-        if (!anchor.href.includes("/Songs/")) {
+        if (!anchor.href.includes("/songs/")) {
             continue; // not a songs link, skip it
         }
 
         // Get everything after "/songs/", e.g. "ncs/"
-        let parts = anchor.href.split("/Songs/");
+        let parts = anchor.href.split("/songs/");
         let folder = parts[1];
 
         // Remove the trailing slash, e.g. "ncs/" -> "ncs"
@@ -105,7 +105,7 @@ async function displayAlbums() {
 
         // Step 4: Try to get info.json for this folder
         try {
-            let infoResponse = await fetch(`/Songs/${folder}/info.json`);
+            let infoResponse = await fetch(`/songs/${folder}/info.json`);
 
             // If the file doesn't exist, skip this folder
             if (!infoResponse.ok) {
@@ -122,7 +122,7 @@ async function displayAlbums() {
                             <path d="M5 20V4L19 12L5 20Z" stroke="#141B34" fill="#000" stroke-width="1.5" stroke-linejoin="round" />
                         </svg>
                     </div>
-                    <img src="/Songs/${folder}/cover.jpg" alt="">
+                    <img src="/songs/${folder}/cover.jpg" alt="">
                     <h2>${info.title}</h2>
                     <p>${info.description}</p>
                 </div>
@@ -139,7 +139,7 @@ async function displayAlbums() {
     for (let card of cards) {
         card.addEventListener("click", async (e) => {
             let folder = e.currentTarget.dataset.folder;
-            songs = await getSongs(`Songs/${folder}`);
+            songs = await getSongs(`songs/${folder}`);
             playMusic(songs[0]);
         });
     }
@@ -148,7 +148,7 @@ async function displayAlbums() {
 async function main() {
 
     //Get the list of all the songs
-    await getSongs("Songs/ncs");
+    await getSongs("songs/ncs");
     playMusic(songs[0], true);
 
     //Display all the albums on the page
@@ -217,7 +217,7 @@ async function main() {
     //load the playlist whenever the card is clicked
     Array.from(document.getElementsByClassName("card")).forEach(e => {
         e.addEventListener("click", async item => {
-            songs = await getSongs(`Songs/${item.currentTarget.dataset.folder}`);
+            songs = await getSongs(`songs/${item.currentTarget.dataset.folder}`);
 
         })
     })
