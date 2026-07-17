@@ -19,7 +19,7 @@ function formatTime(seconds) {
 
 async function getSongs(folder) {
     currFolder = folder;
-    let a = await fetch(`http://127.0.0.1:5500/${folder}/`);
+    let a = await fetch(`/${folder}/`);
     let response = await a.text();
     let div = document.createElement("div")
     div.innerHTML = response;
@@ -72,7 +72,7 @@ async function displayAlbums() {
     console.log("displaying albums");
 
     // Step 1: Get the HTML of the songs folder page
-    let a = await fetch(`http://127.0.0.1:5500/songs/`);
+    let a = await fetch(`/Songs/`);
     let response = await a.text();
 
     // Step 2: Put that HTML into a hidden div so we can read its links
@@ -87,12 +87,12 @@ async function displayAlbums() {
 
         // We only care about links that look like: http://127.0.0.1:5500/songs/ncs/
         // So the href must start with our songs folder URL
-        if (!anchor.href.includes("/songs/")) {
+        if (!anchor.href.includes("/Songs/")) {
             continue; // not a songs link, skip it
         }
 
         // Get everything after "/songs/", e.g. "ncs/"
-        let parts = anchor.href.split("/songs/");
+        let parts = anchor.href.split("/Songs/");
         let folder = parts[1];
 
         // Remove the trailing slash, e.g. "ncs/" -> "ncs"
@@ -105,7 +105,7 @@ async function displayAlbums() {
 
         // Step 4: Try to get info.json for this folder
         try {
-            let infoResponse = await fetch(`http://127.0.0.1:5500/songs/${folder}/info.json`);
+            let infoResponse = await fetch(`/Songs/${folder}/info.json`);
 
             // If the file doesn't exist, skip this folder
             if (!infoResponse.ok) {
@@ -122,7 +122,7 @@ async function displayAlbums() {
                             <path d="M5 20V4L19 12L5 20Z" stroke="#141B34" fill="#000" stroke-width="1.5" stroke-linejoin="round" />
                         </svg>
                     </div>
-                    <img src="/songs/${folder}/cover.jpg" alt="">
+                    <img src="/Songs/${folder}/cover.jpg" alt="">
                     <h2>${info.title}</h2>
                     <p>${info.description}</p>
                 </div>
@@ -139,7 +139,7 @@ async function displayAlbums() {
     for (let card of cards) {
         card.addEventListener("click", async (e) => {
             let folder = e.currentTarget.dataset.folder;
-            songs = await getSongs(`songs/${folder}`);
+            songs = await getSongs(`Songs/${folder}`);
             playMusic(songs[0]);
         });
     }
@@ -148,7 +148,7 @@ async function displayAlbums() {
 async function main() {
 
     //Get the list of all the songs
-    await getSongs("songs/ncs");
+    await getSongs("Songs/ncs");
     playMusic(songs[0], true);
 
     //Display all the albums on the page
@@ -217,7 +217,7 @@ async function main() {
     //load the playlist whenever the card is clicked
     Array.from(document.getElementsByClassName("card")).forEach(e => {
         e.addEventListener("click", async item => {
-            songs = await getSongs(`songs/${item.currentTarget.dataset.folder}`);
+            songs = await getSongs(`Songs/${item.currentTarget.dataset.folder}`);
 
         })
     })
