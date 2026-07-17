@@ -3,6 +3,11 @@ let currentSong = new Audio();
 let songs;
 let currFolder;
 
+// CHANGE THESE IF YOUR REPO NAME OR USERNAME EVER CHANGES
+const OWNER = "Sanket11112005";
+const REPO = "Spotify-clone";
+const SONGS_ROOT = "Songs"; // matches the capital "S" folder in your repo
+
 function formatTime(seconds) {
     if (isNaN(seconds) || seconds < 0) {
         return "00:00";
@@ -19,31 +24,27 @@ function formatTime(seconds) {
 
 async function getSongs(folder) {
     currFolder = folder;
-    let a = await fetch(`${folder}/`);
-    let response = await a.text();
-    let div = document.createElement("div")
-    div.innerHTML = response;
-    let as = div.getElementsByTagName("a");
-    songs = [];
-    for (let index = 0; index < as.length; index++) {
-        const element = as[index];
-        if (element.href.endsWith(".mp3")) {
-            songs.push(element.href.split(`/${folder}/`)[1]);
-        }
-    }
+
+    // Ask GitHub's API what files exist inside this folder (e.g. "Songs/ncs")
+    let a = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/contents/${folder}`);
+    let files = await a.json();
+
+    songs = files
+        .filter(file => file.name.toLowerCase().endsWith(".mp3"))
+        .map(file => file.name);
 
     //Show all the songs in the playlist
     let songUL = document.querySelector(".songlist").getElementsByTagName("ul")[0];
     songUL.innerHTML = "";
     for (const song of songs) {
-        songUL.innerHTML = songUL.innerHTML + `<li><img class="invert" src="music.svg" alt="">
+        songUL.innerHTML = songUL.innerHTML + `<li><img class="invert" src="images/music.svg" alt="">
             <div class="info">
                 <div>${song.replaceAll("%20", " ")}</div>
                 <div>Song Artist</div>
             </div>
             <div class="playnow">
                 <span>Play Now</span>
-                <img class="invert" src="play.svg" alt="">
+                <img class="invert" src="images/play.svg" alt="">
             </div> </li>`;
     }
 
@@ -58,11 +59,11 @@ async function getSongs(folder) {
 }
 
 const playMusic = (track, pause = false) => {
-    // let audio = new Audio("/songs/" + track);
+    // No leading slash: keeps this working under a GitHub Pages subpath like /Spotify-clone/
     currentSong.src = `${currFolder}/` + track;
     if (!pause) {
         currentSong.play();
-        play.src = "pause.svg"
+        play.src = "images/pause.svg"
     }
     document.querySelector(".songinfo").innerHTML = decodeURI(track);
     document.querySelector(".songtime").innerHTML = "00:00 / 00:00";
@@ -71,50 +72,29 @@ const playMusic = (track, pause = false) => {
 async function displayAlbums() {
     console.log("displaying albums");
 
-    // Step 1: Get the HTML of the songs folder page
-    let a = await fetch(`songs/`);
-    let response = await a.text();
-
-    // Step 2: Put that HTML into a hidden div so we can read its links
-    let div = document.createElement("div");
-    div.innerHTML = response;
-    let anchors = div.getElementsByTagName("a");
+    // Ask GitHub's API what's inside the Songs folder (each album is a subfolder)
+    let a = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/contents/${SONGS_ROOT}`);
+    let items = await a.json();
 
     let cardContainer = document.querySelector(".cardContainer");
+    cardContainer.innerHTML = "";
 
-    // Step 3: Go through every link on that page
-    for (let anchor of anchors) {
+    // Only keep entries that are actual folders (albums)
+    let albumFolders = items.filter(item => item.type === "dir");
 
-        // We only care about links that look like: http://127.0.0.1:5500/songs/ncs/
-        // So the href must start with our songs folder URL
-        if (!anchor.href.includes("songs/")) {
-            continue; // not a songs link, skip it
-        }
+    for (const item of albumFolders) {
+        let folder = item.name;
 
-        // Get everything after "/songs/", e.g. "ncs/"
-        let parts = anchor.href.split("songs/");
-        let folder = parts[1];
-
-        // Remove the trailing slash, e.g. "ncs/" -> "ncs"
-        folder = folder.replace("/", "");
-
-        // Skip if empty (this happens for the link back to the songs folder itself)
-        if (folder === "") {
-            continue;
-        }
-
-        // Step 4: Try to get info.json for this folder
         try {
-            let infoResponse = await fetch(`http://127.0.0.1:5500/songs/${folder}/info.json`);
-
-            // If the file doesn't exist, skip this folder
+            // Get info.json's metadata from the API (content comes back base64-encoded)
+            let infoResponse = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/contents/${SONGS_ROOT}/${folder}/info.json`);
             if (!infoResponse.ok) {
-                continue;
+                continue; // skip folders that don't have info.json
             }
+            let infoData = await infoResponse.json();
+            let info = JSON.parse(atob(infoData.content));
 
-            let info = await infoResponse.json();
-
-            // Step 5: Add a card to the page for this album
+            // Cover image is a normal static file — fetch it directly, no leading slash
             cardContainer.innerHTML += `
                 <div data-folder="${folder}" class="card">
                     <div class="play">
@@ -122,24 +102,22 @@ async function displayAlbums() {
                             <path d="M5 20V4L19 12L5 20Z" stroke="#141B34" fill="#000" stroke-width="1.5" stroke-linejoin="round" />
                         </svg>
                     </div>
-                    <img src="/songs/${folder}/cover.jpg" alt="">
+                    <img src="${SONGS_ROOT}/${folder}/cover.jpg" alt="">
                     <h2>${info.title}</h2>
                     <p>${info.description}</p>
                 </div>
             `;
-
         } catch (error) {
-            // If anything goes wrong (bad JSON, network error, etc.), skip this folder
-            console.log(`Could not load info for folder: ${folder}`);
+            console.log(`Could not load info for folder: ${folder}`, error);
         }
     }
 
-    // Step 6: When a card is clicked, load that album's songs
+    // When a card is clicked, load that album's songs
     let cards = document.getElementsByClassName("card");
     for (let card of cards) {
         card.addEventListener("click", async (e) => {
             let folder = e.currentTarget.dataset.folder;
-            songs = await getSongs(`songs/${folder}`);
+            songs = await getSongs(`${SONGS_ROOT}/${folder}`);
             playMusic(songs[0]);
         });
     }
@@ -148,7 +126,7 @@ async function displayAlbums() {
 async function main() {
 
     //Get the list of all the songs
-    await getSongs("songs/ncs");
+    await getSongs(`${SONGS_ROOT}/ncs`);
     playMusic(songs[0], true);
 
     //Display all the albums on the page
@@ -158,11 +136,11 @@ async function main() {
     play.addEventListener("click", () => {
         if (currentSong.paused) {
             currentSong.play();
-            play.src = "pause.svg";
+            play.src = "images/pause.svg";
         }
         else {
             currentSong.pause();
-            play.src = "play.svg"
+            play.src = "images/play.svg"
         }
     })
 
@@ -214,24 +192,16 @@ async function main() {
         currentSong.volume = parseInt(e.target.value) / 100;
     })
 
-    //load the playlist whenever the card is clicked
-    Array.from(document.getElementsByClassName("card")).forEach(e => {
-        e.addEventListener("click", async item => {
-            songs = await getSongs(`songs/${item.currentTarget.dataset.folder}`);
-
-        })
-    })
-
     // Add event listener to mute the track
     document.querySelector(".volume>img").addEventListener("click", e => {
         console.log(e.target)
-        if (e.target.src.includes("volume.svg")) {
-            e.target.src = e.target.src.replace("volume.svg", "mute.svg")
+        if (e.target.src.includes("images/volume.svg")) {
+            e.target.src = e.target.src.replace("images/volume.svg", "images/mute.svg")
             currentSong.volume = 0;
             document.querySelector(".range").getElementsByTagName("input")[0].value = 0;
         }
         else {
-            e.target.src = e.target.src.replace("mute.svg", "volume.svg")
+            e.target.src = e.target.src.replace("images/mute.svg", "images/volume.svg")
             currentSong.volume = .10;
             document.querySelector(".range").getElementsByTagName("input")[0].value = 10;
         }
