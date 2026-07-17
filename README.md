@@ -96,9 +96,6 @@ Then include them like this:
 ```markdown
 ![Home Page](screenshots/home.png)
 
-![Music Player](screenshots/player.png)
-```
-
 ---
 
 ## 👨‍💻 Author
