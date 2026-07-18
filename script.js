@@ -36,14 +36,14 @@ async function getSongs(folder) {
     let songUL = document.querySelector(".songlist").getElementsByTagName("ul")[0];
     songUL.innerHTML = "";
     for (const song of songs) {
-        songUL.innerHTML = songUL.innerHTML + `<li><img class="invert" src="music.svg" alt="">
+        songUL.innerHTML = songUL.innerHTML + `<li><img class="invert" src="images/music.svg" alt="">
             <div class="info">
                 <div>${song.replaceAll("%20", " ")}</div>
                 <div>Song Artist</div>
             </div>
             <div class="playnow">
                 <span>Play Now</span>
-                <img class="invert" src="play.svg" alt="">
+                <img class="invert" src="images/play.svg" alt="">
             </div> </li>`;
     }
 
@@ -62,7 +62,7 @@ const playMusic = (track, pause = false) => {
     currentSong.src = `${currFolder}/` + track;
     if (!pause) {
         currentSong.play();
-        play.src = "pause.svg"
+        play.src = "images/pause.svg"
     }
     document.querySelector(".songinfo").innerHTML = decodeURI(track);
     document.querySelector(".songtime").innerHTML = "00:00 / 00:00";
@@ -158,11 +158,11 @@ async function main() {
     play.addEventListener("click", () => {
         if (currentSong.paused) {
             currentSong.play();
-            play.src = "pause.svg";
+            play.src = "images/pause.svg";
         }
         else {
             currentSong.pause();
-            play.src = "play.svg"
+            play.src = "images/play.svg"
         }
     })
 
@@ -225,13 +225,13 @@ async function main() {
     // Add event listener to mute the track
     document.querySelector(".volume>img").addEventListener("click", e => {
         console.log(e.target)
-        if (e.target.src.includes("volume.svg")) {
-            e.target.src = e.target.src.replace("volume.svg", "mute.svg")
+        if (e.target.src.includes("images/volume.svg")) {
+            e.target.src = e.target.src.replace("images/volume.svg", "images/mute.svg")
             currentSong.volume = 0;
             document.querySelector(".range").getElementsByTagName("input")[0].value = 0;
         }
         else {
-            e.target.src = e.target.src.replace("mute.svg", "volume.svg")
+            e.target.src = e.target.src.replace("images/mute.svg", "images/volume.svg")
             currentSong.volume = .10;
             document.querySelector(".range").getElementsByTagName("input")[0].value = 10;
         }
